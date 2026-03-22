@@ -4,13 +4,17 @@ import re
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
+# Initialize Groq client
 client = Groq(api_key=os.getenv("groq_llama-3.1-8b-instant"))
 
 
 def extract_json(text):
-    # extract JSON array safely
+    """
+    Extract JSON array safely from AI response
+    """
     match = re.search(r"\[.*?\]", text, re.DOTALL)
     if match:
         try:
@@ -66,7 +70,42 @@ Example:
         print("AI ERROR:", e)
         categories = ["Other"] * len(transactions)
 
+    # 🔥 FINAL RULE-BASED CONTROL (CRITICAL)
     for i in range(len(transactions)):
+
+        desc = transactions[i]["description"]
+        amount = transactions[i]["amount"]
+        ai_category = categories[i].lower()
+
+        # 1. Income → ONLY if positive
+        if amount > 0:
+            transactions[i]["category"] = "Income"
+            continue
+
+        # 2. Cash withdrawal
+        if "atm" in desc:
+            transactions[i]["category"] = "Cash Withdrawal"
+            continue
+
+        # 3. Keyword-based fixes (IMPORTANT)
+        if "swiggy" in desc or "zomato" in desc:
+            transactions[i]["category"] = "Food"
+            continue
+
+        if "petrol" in desc or "fuel" in desc:
+            transactions[i]["category"] = "Transport"
+            continue
+
+        if "amazon" in desc or "flipkart" in desc:
+            transactions[i]["category"] = "Shopping"
+            continue
+
+        # 4. Prevent wrong AI classification
+        if ai_category == "income":
+            transactions[i]["category"] = "Other"
+            continue
+
+        # 5. Use AI result (capitalize properly)
         transactions[i]["category"] = categories[i]
 
     return transactions

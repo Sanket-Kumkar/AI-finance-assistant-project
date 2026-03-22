@@ -6,6 +6,7 @@ from parsers.hdfc_parser import parse_hdfc
 from processing.clean_transactions import clean_transactions
 from analysis.financial_metrics import calculate_metrics
 from analysis.health_score import calculate_health_score
+from ai.ai_advisor import generate_advice
 
 
 st.set_page_config(page_title="AI Finance Analyzer", layout="wide")
@@ -71,6 +72,7 @@ if uploaded_file:
     expense_df["amount"] = expense_df["amount"].abs()
 
     category_summary = expense_df.groupby("category")["amount"].sum().reset_index()
+    category_dict = dict(zip(category_summary["category"], category_summary["amount"]))
 
     if not category_summary.empty:
         fig = px.pie(
@@ -80,8 +82,10 @@ if uploaded_file:
             title="Spending by Category"
         )
         st.plotly_chart(fig, use_container_width=True)
+    
 
     st.subheader("📈 Monthly Spending Trend")
+
 
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
@@ -107,3 +111,10 @@ if uploaded_file:
     df = pd.DataFrame(transactions)
 
     st.dataframe(df.head(20), use_container_width=True)
+
+
+    advice = generate_advice(metrics, category_dict, health_score)
+    
+    st.subheader("🤖 AI Financial Advice")
+
+    st.info(advice)

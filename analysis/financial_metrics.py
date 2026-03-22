@@ -1,19 +1,20 @@
 def calculate_metrics(transactions):
+
     income = 0
     expense = 0
     cash = 0
 
     for t in transactions:
         amount = t["amount"]
-        desc = t["description"]
 
         if amount > 0:
             income += amount
         else:
-            if "atm" in desc:
+            expense += abs(amount)
+
+            # Track cash separately (but still count as expense)
+            if t["category"] == "Cash Withdrawal":
                 cash += abs(amount)
-            else:
-                expense += abs(amount)
 
     savings = income - expense
 
