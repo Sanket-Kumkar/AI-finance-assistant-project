@@ -5,6 +5,7 @@ from ai.ai_categorization import categorize_transactions
 from parsers.hdfc_parser import parse_hdfc
 from processing.clean_transactions import clean_transactions
 from analysis.financial_metrics import calculate_metrics
+from analysis.health_score import calculate_health_score
 
 
 st.set_page_config(page_title="AI Finance Analyzer", layout="wide")
@@ -37,6 +38,19 @@ if uploaded_file:
     transactions = categorize_transactions(transactions)
 
     metrics = calculate_metrics(transactions)
+
+    health_score = calculate_health_score(metrics, transactions)
+
+    st.subheader("💡 Financial Health Score")
+
+    st.metric("Score", f"{health_score} / 100")
+
+    if health_score >= 80:
+        st.success("Excellent financial health! Keep it up.")
+    elif health_score >= 60:
+        st.warning("Good, but there is room for improvement.")
+    else:
+        st.error("Your financial health needs attention.")
 
     st.subheader("📊 Financial Summary")
 
