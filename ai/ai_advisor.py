@@ -35,6 +35,7 @@ Category Spending:
 Financial Health Score: {health_score}/100
 
 Instructions:
+- Talk like you are interacting with user directly not in third person perspective
 - Clearly state if user is saving or overspending
 - Mention strongest financial behavior (like savings rate or low expenses)
 - Mention one area to improve

@@ -5,27 +5,24 @@ def calculate_health_score(metrics, transactions):
     savings = metrics["savings"]
     cash = metrics["cash"]
 
-    score = 100
+    score = 0
 
-    # 1. Savings Rate
+    # 1. Savings Score (0–40)
     if income > 0:
         savings_rate = savings / income
-        if savings_rate < 0.2:
-            score -= 20
-        elif savings_rate < 0.3:
-            score -= 10
-    else:
-        score -= 30
+        score += min(40, savings_rate * 40)
 
-    # 2. High Cash Usage
+    # 2. Expense Control (0–30)
+    if income > 0:
+        expense_ratio = expense / income
+        score += max(0, 30 - (expense_ratio * 30))
+
+    # 3. Cash Usage Penalty (0–20)
     if expense > 0:
         cash_ratio = cash / expense
-        if cash_ratio > 0.3:
-            score -= 15
-        elif cash_ratio > 0.2:
-            score -= 10
+        score += max(0, 20 - (cash_ratio * 20))
 
-    # 3. Category Overspending (Food example)
+    # 4. Category Balance (0–10)
     category_totals = {}
 
     for t in transactions:
@@ -36,10 +33,7 @@ def calculate_health_score(metrics, transactions):
     food_spend = category_totals.get("Food", 0)
 
     if income > 0:
-        if food_spend / income > 0.25:
-            score -= 15
-
-    # Clamp score
-    score = max(0, min(100, score))
+        food_ratio = food_spend / income
+        score += max(0, 10 - (food_ratio * 10))
 
     return round(score)

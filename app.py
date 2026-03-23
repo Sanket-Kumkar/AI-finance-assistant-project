@@ -7,6 +7,7 @@ from processing.clean_transactions import clean_transactions
 from analysis.financial_metrics import calculate_metrics
 from analysis.health_score import calculate_health_score
 from ai.ai_advisor import generate_advice
+from analysis.scenario_simulator import simulate_savings,simulate_multi_savings
 
 
 st.set_page_config(page_title="AI Finance Analyzer", layout="wide")
@@ -17,8 +18,11 @@ st.markdown("Upload your bank statement and get instant financial insights.")
 
 bank = st.selectbox(
     "Select Bank",
-    ["HDFC Bank"]
+    ["HDFC Bank","SBI (Coming Soon)", "Axis (Coming Soon)"]
 )
+if bank != "HDFC Bank":
+    st.warning("Support for this bank is under development.")
+    st.stop()
 
 uploaded_file = st.file_uploader(
     "Upload Bank Statement (CSV / Excel)",
@@ -118,3 +122,45 @@ if uploaded_file:
     st.subheader("🤖 AI Financial Advice")
 
     st.info(advice)
+
+    st.subheader("🔮 Scenario Simulator")
+
+
+    categories = df[df["amount"] < 0]["category"].unique()
+
+    selected_categories = st.multiselect(
+        "Select categories to reduce spending",
+        categories
+    )
+
+    reduction_inputs = {}
+
+    for cat in selected_categories:
+        reduction_inputs[cat] = st.number_input(
+            f"Reduction for {cat} (₹)",
+            min_value=0,
+            step=100,
+            value=500
+        )
+
+    if st.button("Simulate"):
+
+        new_metrics = simulate_multi_savings(
+            transactions,
+            metrics,
+            reduction_inputs
+        )
+
+        st.subheader("📊 Simulation Result")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("New Savings", f"₹ {int(new_metrics['savings']):,}")
+        col2.metric(
+            "Savings Increase",
+            f"₹ {int(new_metrics['savings'] - metrics['savings']):,}"
+        )
+
+        new_health_score = calculate_health_score(new_metrics, transactions)
+
+        col3.metric("New Score", f"{new_health_score}/100")
