@@ -77,35 +77,45 @@ Example:
         amount = transactions[i]["amount"]
         ai_category = categories[i].lower()
 
-        # 1. Income → ONLY if positive
+        # Normalize description
+        desc_lower = desc.lower()
+
+        # 1. Income
         if amount > 0:
             transactions[i]["category"] = "Income"
             continue
 
         # 2. Cash withdrawal
-        if "atm" in desc:
+        if "atm" in desc_lower:
             transactions[i]["category"] = "Cash Withdrawal"
             continue
 
-        # 3. Keyword-based fixes (IMPORTANT)
-        if "swiggy" in desc or "zomato" in desc:
+        # 🔥 3. EMI / Loan detection
+        if "emi" in desc_lower or "loan" in desc_lower:
+            transactions[i]["category"] = "Loan Repayment"
+            continue
+
+        # 🔥 4. Food detection
+        if "swiggy" in desc_lower or "zomato" in desc_lower:
             transactions[i]["category"] = "Food"
             continue
 
-        if "petrol" in desc or "fuel" in desc:
-            transactions[i]["category"] = "Transport"
-            continue
-
-        if "amazon" in desc or "flipkart" in desc:
+        # 🔥 5. Shopping
+        if "amazon" in desc_lower or "flipkart" in desc_lower:
             transactions[i]["category"] = "Shopping"
             continue
 
-        # 4. Prevent wrong AI classification
+        # 🔥 6. Transport
+        if "petrol" in desc_lower or "fuel" in desc_lower:
+            transactions[i]["category"] = "Transport"
+            continue
+
+        # 7. Prevent wrong AI classification
         if ai_category == "income":
             transactions[i]["category"] = "Other"
             continue
 
-        # 5. Use AI result (capitalize properly)
+        # 8. AI fallback
         transactions[i]["category"] = categories[i]
 
     return transactions

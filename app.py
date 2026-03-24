@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from ai.ai_categorization import categorize_transactions
 from parsers.hdfc_parser import parse_hdfc
+from parsers.csv_parser import parse_csv
 from processing.clean_transactions import clean_transactions
 from analysis.financial_metrics import calculate_metrics
 from analysis.health_score import calculate_health_score
@@ -25,16 +26,29 @@ if bank != "HDFC Bank":
     st.stop()
 
 uploaded_file = st.file_uploader(
-    "Upload Bank Statement (CSV / Excel)",
-    type=["csv", "xlsx"]
+    "Upload Bank Statement (CSV / Excel/ pdf)",
+    type=["csv", "xlsx","pdf"]
 )
+
+if uploaded_file is not None:
+
+    file_type = uploaded_file.name.split(".")[-1].lower()
 
 if uploaded_file:
     
     st.write("File uploaded successfully:", uploaded_file.name)
 
-    if bank == "HDFC Bank":
+    if file_type == "csv":
+        transactions = parse_csv(uploaded_file)
+
+    elif file_type == "pdf":
         transactions = parse_hdfc(uploaded_file)
+
+    else:
+        st.error("Unsupported file format")
+        st.stop()
+    
+    st.success(f"{file_type.upper()} file processed successfully")
     
     st.write("Number of transactions:", len(transactions))
 

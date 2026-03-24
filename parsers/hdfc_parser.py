@@ -1,49 +1,53 @@
-import pandas as pd
+import pdfplumber
 
 
 def parse_hdfc(file):
-    try:
-        df = pd.read_excel(file)
-    except:
-        df = pd.read_csv(file)
-
-    # Clean column names
-    df.columns = [col.strip().lower().replace(".", "") for col in df.columns]
-
-    # Standard column mapping
-    column_map = {
-        "date": "date",
-        "narration": "description",
-        "withdrawal amt": "debit",
-        "deposit amt": "credit",
-        "closing balance": "balance"
-    }
-
-    df = df.rename(columns=column_map)
 
     transactions = []
 
-    for _, row in df.iterrows():
+    with pdfplumber.open(file) as pdf:
 
-        debit = row.get("debit")
-        credit = row.get("credit")
+        for page in pdf.pages:
 
-        if pd.notna(debit) and debit != 0:
-            amount = -float(debit)
-            t_type = "debit"
-        elif pd.notna(credit) and credit != 0:
-            amount = float(credit)
-            t_type = "credit"
-        else:
-            continue
+            tables = page.extract_tables()
 
-        transactions.append({
-            "date": row.get("date"),
-            "description": str(row.get("description", "")).strip(),
-            "amount": amount,
-            "type": t_type,
-            "balance": float(row.get("balance", 0)) if pd.notna(row.get("balance")) else 0,
-            "category": None
-        })
+            for table in tables:
+
+                # Skip small/invalid tables
+                if len(table) < 2:
+                    continue
+
+                headers = table[0]
+
+                # Check if this is transaction table
+                if "Date" not in headers:
+                    continue
+
+                for row in table[1:]:
+
+                    try:
+                        date = row[0]
+                        narration = row[1]
+                        withdrawal = row[4]
+                        deposit = row[5]
+
+                        # Clean values
+                        narration = narration.replace("\n", " ").lower() if narration else ""
+
+                        amount = 0
+
+                        if deposit and deposit.strip():
+                            amount = float(deposit.replace(",", ""))
+                        elif withdrawal and withdrawal.strip():
+                            amount = -float(withdrawal.replace(",", ""))
+
+                        transactions.append({
+                            "date": date,
+                            "description": narration,
+                            "amount": amount
+                        })
+
+                    except:
+                        continue
 
     return transactions
