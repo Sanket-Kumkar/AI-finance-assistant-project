@@ -11,6 +11,7 @@ from ai.ai_advisor import generate_advice
 from analysis.scenario_simulator import simulate_savings,simulate_multi_savings
 
 
+
 st.set_page_config(page_title="AI Finance Analyzer", layout="wide")
 
 st.title("💰 AI-Powered Finance Analyzer")
@@ -19,11 +20,9 @@ st.markdown("Upload your bank statement and get instant financial insights.")
 
 bank = st.selectbox(
     "Select Bank",
-    ["HDFC Bank","SBI (Coming Soon)", "Axis (Coming Soon)"]
+    ["HDFC Bank","IDFC (coming soon)","SBI (Coming Soon)", "Axis (Coming Soon)"]
 )
-if bank != "HDFC Bank":
-    st.warning("Support for this bank is under development.")
-    st.stop()
+
 
 uploaded_file = st.file_uploader(
     "Upload Bank Statement (CSV / Excel/ pdf)",
@@ -34,31 +33,38 @@ if uploaded_file is not None:
 
     file_type = uploaded_file.name.split(".")[-1].lower()
 
-if uploaded_file:
-    
-    st.write("File uploaded successfully:", uploaded_file.name)
+    with st.spinner("Analyzing your financial data..."):
 
-    if file_type == "csv":
-        transactions = parse_csv(uploaded_file)
+        if file_type == "csv":
+            transactions = parse_csv(uploaded_file)
 
-    elif file_type == "pdf":
-        transactions = parse_hdfc(uploaded_file)
+        elif file_type == "pdf":
 
-    else:
-        st.error("Unsupported file format")
-        st.stop()
+            if bank == "HDFC Bank":
+                transactions = parse_hdfc(uploaded_file)
+
+            else:
+                st.warning("Selected bank is not supported yet.")
+                st.stop()
+
+        else:
+            st.error("Unsupported file format")
+            st.stop()
     
     st.success(f"{file_type.upper()} file processed successfully")
+
     
     st.write("Number of transactions:", len(transactions))
 
-    transactions = clean_transactions(transactions)
+    with st.spinner("Analyzing your financial data..."):
 
-    transactions = categorize_transactions(transactions)
+        transactions = clean_transactions(transactions)
 
-    metrics = calculate_metrics(transactions)
+        transactions = categorize_transactions(transactions)
 
-    health_score = calculate_health_score(metrics, transactions)
+        metrics = calculate_metrics(transactions)
+
+        health_score = calculate_health_score(metrics, transactions)
 
     st.subheader("💡 Financial Health Score")
 
@@ -123,6 +129,9 @@ if uploaded_file:
             title="Monthly Expenses"
         )
         st.plotly_chart(fig2, use_container_width=True)
+    st.subheader("📌 Key Insights")
+
+    st.write(f"Top spending category: {category_summary.sort_values(by='amount', ascending=False).iloc[0]['category']}")
 
     st.subheader("📄 Sample Transactions")
 
@@ -132,6 +141,7 @@ if uploaded_file:
 
 
     advice = generate_advice(metrics, category_dict, health_score)
+    
     
     st.subheader("🤖 AI Financial Advice")
 
@@ -178,3 +188,4 @@ if uploaded_file:
         new_health_score = calculate_health_score(new_metrics, transactions)
 
         col3.metric("New Score", f"{new_health_score}/100")
+
