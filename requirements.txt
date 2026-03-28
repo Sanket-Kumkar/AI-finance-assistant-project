@@ -4,3 +4,4 @@ pdfplumber
 matplotlib
 openai
 plotly
+groq
