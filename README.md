@@ -128,4 +128,4 @@ Hackathon Project
 This project uses **sample/sanitized bank statements** for demonstration.  
 No real user data is stored or shared.
 
-Live APP link -
+Live APP link - https://ai-finance-advisor.streamlit.app/
