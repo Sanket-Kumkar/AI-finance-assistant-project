@@ -5,3 +5,4 @@ matplotlib
 openai
 plotly
 groq
+dotenv
